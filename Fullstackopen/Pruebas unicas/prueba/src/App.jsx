@@ -1,49 +1,53 @@
 import { useState } from "react";
-import Note from "./components/Note";
 
-const App = (props) => {
-  const [notes, setNotes] = useState(props.notes);
-  const [newNote, setNewNote] = useState("a new note...");
-  const [showAll, setShowAll] = useState(true)
+const App = () => {
+  const [persons, setPersons] = useState([
+    { name: 'Arto Hellas', number: '040-123456', id: 1 },
+    { name: 'Ada Lovelace', number: '39-44-5323523', id: 2 },
+    { name: 'Dan Abramov', number: '12-43-234345', id: 3 },
+    { name: 'Mary Poppendieck', number: '39-23-6423122', id: 4 }
+  ])
+  const [filter, setFilter] = useState("");
 
-  const addNote = (event) => {
-    event.preventDefault()
-    const noteObject = {
-      content: newNote,
-      important: Math.random() < 0.5,
-      id: String(notes.length + 1),
-    }
-  
-    setNotes(notes.concat(noteObject))
-    setNewNote('')
-  }
-
-  const handleNoteChange = (event) => {
-    setNewNote(event.target.value);
+  const addPerson = (event) => {
+    event.preventDefault();
+    console.log("button clicked", event.target);
+    const personObject = {
+      name: event.target[0].value,
+      number: event.target[1].value,
+    };
+    if (persons.some((person) => person.name === personObject.name)) {
+      alert(`${personObject.name} is already added to phonebook`);
+    }else(setPersons(persons.concat(personObject)))
+    event.target[0].value = "";
   };
 
-  const notesToShow = showAll
-  ? notes
-  : notes.filter(note => note.important === true)
+  const handleFilterChange = (event) => {
+    setFilter(event.target.value);
+  };
+
+  const personsToShow = persons.filter(person =>
+    person.name.toLowerCase().includes(filter.toLowerCase())
+  );
 
   return (
     <div>
-      <h1>Notes</h1>
-      <div>
-        <button onClick={() => setShowAll(!showAll)}>
-          show {showAll ? 'important' : 'all'}
-        </button>
-      </div>
-      <ul>
-        {notesToShow.map(note =>
-          <Note key={note.id} note={note} />
-        )}
-      </ul>
-      <form onSubmit={addNote}>
-        <input value={newNote} onChange={handleNoteChange} />
-
-        <button type="submit">save</button>
+      <h2>Phonebook</h2>
+      <p>Filter show with:<input id="Filter" value={filter} onChange={handleFilterChange}/></p>
+      <h2>Add new number</h2>
+      <form onSubmit={addPerson}>
+        <div>
+          name: <input />
+        </div>
+        <div>number: <input /></div>
+        <div>
+          <button type="submit">add</button>
+        </div>
       </form>
+      <h2>Numbers</h2>
+      {personsToShow.map((person) => (
+        <div key={person.name}>{person.name} {person.number}</div>
+      ))}
     </div>
   );
 };
