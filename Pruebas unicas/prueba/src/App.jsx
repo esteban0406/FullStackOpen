@@ -17,7 +17,7 @@ const App = () => {
       })
   }
   useEffect(hook, [])
-  console.log('render', notes.length, 'notes')
+  console.log('render del hook', notes.length, 'notes')
 
   const addNote = (event) => {
     event.preventDefault();
