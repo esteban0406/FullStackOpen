@@ -15,6 +15,13 @@ const CountryInfo = ({ CountryInfo }) => {
         alt={CountryInfo.name.common}
         width="100"
       />
+
+      <h3>Weather in {CountryInfo.capital[0]}</h3>
+      <p>temperature: {CountryInfo.temperature} Celsius</p>
+      <img
+        src={CountryInfo.weather_icons}
+        alt={CountryInfo.weather_descriptions}
+        width="100"/>
     </div>
   );
 };

@@ -6,11 +6,20 @@ import CountryInfo from "./components/CountryInfo";
 const App = () => {
   const [countries, setCountries] = useState([]);
   const [filter, setFilter] = useState("");
-  const [showCountryInfo, setShowCountryInfo] = useState(false);
+  const [selectedCountryId, setSelectedCountryId] = useState(null);
+  const [weather, setWeather] = useState([]);
 
   useEffect(() => {
     app.getCounties().then((data) => {
-      setCountries(data);
+      !data.error
+        ? setCountries(data)
+        : console.log("Error fetching countries data:", data.error);
+    });
+  }, []);
+
+  useEffect(() => {
+    app.getWeather().then((data) => {
+      setWeather(data);
     });
   }, []);
 
@@ -24,8 +33,9 @@ const App = () => {
       : false
   );
 
-  const handleShowCountryInfo = () => {
-    setShowCountryInfo(!showCountryInfo);
+  const handleShowCountryInfo = (id) => {
+    console.log("Clicked country ID:", id)
+    setSelectedCountryId(id === selectedCountryId ? null : id);
   };
 
   return (
@@ -39,19 +49,24 @@ const App = () => {
         <CountryInfo CountryInfo={filteredCountries[0]} />
       ) : filteredCountries.length < 10 ? (
         <ul>
-          {filteredCountries.map((country) => (
-            <li key={country.id}>
+          {filteredCountries.map((country) => (            
+            <li key={country.cca2}>
               {country.name.common}
-              <button onClick={handleShowCountryInfo}>Shows</button>
-              {showCountryInfo ? (
-                <CountryInfo country={country} />
-              ) : null}
+              <button onClick={() => handleShowCountryInfo(country.cca2)}>
+                Shows
+              </button>
+              {selectedCountryId === country.cca2 && (
+                <CountryInfo CountryInfo={country} />
+              )}
             </li>
           ))}
         </ul>
       ) : (
         <p>Too many matches, specify another filter</p>
       )}
+      <h3>Weahther Bogota "locas"</h3>
+      <p>Temperature: {weather.weather}</p>
+      <p>Location {weather.values}</p>
     </div>
   );
 };
