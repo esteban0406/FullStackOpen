@@ -1,6 +1,8 @@
 const express = require("express");
+const morgan = require("morgan");
 
 const app = express();
+app.use(morgan("dev"));
 
 let persons = [
   {
@@ -56,21 +58,19 @@ const generateId = () => {
 
 app.post("/api/persons", (request, response) => {
   const body = request.body;
-
-  !body.name || !body.number
-    ? response.status(400).json({ error: "content missing" })
-    : persons.find((person) => person.name === body.name)
-    ? response.status(400).json({ error: "name must be unique" })
-    : null;
-
   const person = {
     name: body.name,
     number: body.number,
     id: generateId(),
   };
 
-  persons = persons.concat(person);
+  !body.name || !body.number
+    ? response.status(400).json({ error: "content missing" })
+    : persons.find((person) => person.name === body.name)
+    ? response.status(400).json({ error: "name must be unique" })
+    : (persons = persons.concat(person));
   response.json(person);
+  app.use(morgan("dev"));
 });
 
 app.get("/info", (request, response) => {
