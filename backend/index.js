@@ -6,6 +6,7 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 app.use(morgan("dev"));
+app.use(express.static('dist'))
 
 let notes = [
   {
@@ -78,8 +79,7 @@ app.post("/api/notes/", (request, response) => {
   };
 
   notes = notes.concat(note);
-
-  response.json(note);
+  response.status(201).json(note); // Ensure the newly created note is returned
 });
 
 const unknownEndpoint = (request, response) => {
@@ -88,7 +88,7 @@ const unknownEndpoint = (request, response) => {
 
 app.use(unknownEndpoint);
 
-const PORT = 3001;
+const PORT = process.env.PORT || 3001
 app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
+  console.log(`Server running on port ${PORT}`)
+})
