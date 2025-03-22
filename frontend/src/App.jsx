@@ -2,19 +2,21 @@ import { useState, useEffect } from "react";
 import Note from "./components/Note";
 import Notification from "./components/Notification";
 import noteService from "./services/notes";
-import './index.css';
-
+import "./index.css";
 
 const App = () => {
   const [notes, setNotes] = useState([]);
   const [newNote, setNewNote] = useState("");
   const [showAll, setShowAll] = useState(true);
-  const [errorMessage, setErrorMessage] = useState('some error happened...')
+  const [errorMessage, setErrorMessage] = useState("some error happened...");
 
   useEffect(() => {
-    noteService.getAll().then((initialNotes) => {
-      setNotes(initialNotes);
-    });
+    const fetchNotes = () => {
+      noteService.getAll().then((initialNotes) => {
+        setNotes(Array.isArray(initialNotes) ? initialNotes : []); // Ensure notes is an array
+      });
+    };
+    fetchNotes(); // Fetch notes whenever updateTrigger changes
   }, []);
 
   const addNote = (event) => {
@@ -25,9 +27,6 @@ const App = () => {
     };
 
     noteService.create(noteObject).then((returnedNote) => {
-      log(noteService.create(noteObject));
-      console.log(returnedNote);
-      
       setNotes(notes.concat(returnedNote));
       setNewNote("");
     });
@@ -45,10 +44,10 @@ const App = () => {
       .catch((error) => {
         setErrorMessage(
           `Note '${note.content}' was already removed from server`
-        )
+        );
         setTimeout(() => {
-          setErrorMessage(null)
-        }, 5000)
+          setErrorMessage(null);
+        }, 5000);
         setNotes(notes.filter((n) => n.id !== id));
       });
   };
@@ -58,22 +57,24 @@ const App = () => {
   };
 
   const notesToShow = showAll
-    ? notes
+    ? notes // Ensure notes is an array
     : notes.filter((note) => note.important === true);
 
-    const Footer = () => {
-      const footerStyle = {
-        color: 'green',
-        fontStyle: 'italic',
-        fontSize: 16
-      }
-      return (
-        <div style={footerStyle}>
-          <br />
-          <em>Note app, Department of Computer Science, University of Helsinki 2025</em>
-        </div>
-      )
-    }
+  const Footer = () => {
+    const footerStyle = {
+      color: "green",
+      fontStyle: "italic",
+      fontSize: 16,
+    };
+    return (
+      <div style={footerStyle}>
+        <br />
+        <em>
+          Note app, Department of Computer Science, University of Helsinki 2025
+        </em>
+      </div>
+    );
+  };
 
   return (
     <div>
@@ -97,7 +98,7 @@ const App = () => {
         <input value={newNote} onChange={handleNoteChange} />
         <button type="submit">save</button>
       </form>
-      <Footer/>
+      <Footer />
     </div>
   );
 };
