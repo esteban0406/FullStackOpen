@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const apiKey = "b958eefc16515d7623e9300d90af0de6";
+const apiKey = import.meta.env.VITE_SOME_KEY
 const baseUrl = "https://studies.cs.helsinki.fi/restcountries/api/all";
 
 const allData = {
