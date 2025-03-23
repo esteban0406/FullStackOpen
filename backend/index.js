@@ -1,10 +1,14 @@
+require('dotenv').config()
 const express = require("express");
 const morgan = require("morgan");
-const app = express();
+const Note = require('./models/note')
 
+
+const app = express();
 app.use(express.json());
 app.use(morgan("dev"));
 app.use(express.static('dist'))
+
 
 let notes = [
   {
@@ -30,9 +34,11 @@ app.get("/", (request, response) => {
   response.send("<h1>Hello World!</h1>");
 });
 
-app.get("/api/notes", (request, response) => {
-  response.json(notes);
-});
+app.get('/api/notes', (request, response) => {
+  Note.find({}).then(notes => {
+    response.json(notes)
+  })
+})
 
 app.get("/api/notes/:id", (request, response) => {
   const id = request.params.id;
@@ -86,7 +92,7 @@ const unknownEndpoint = (request, response) => {
 
 app.use(unknownEndpoint);
 
-const PORT = process.env.PORT || 3001
+const PORT = process.env.PORT
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`)
 })
