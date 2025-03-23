@@ -2,6 +2,7 @@ const express = require("express");
 const morgan = require("morgan");
 
 const app = express();
+app.use(express.static('dist'))
 app.use(morgan("dev"));
 
 let persons = [
@@ -73,13 +74,26 @@ app.post("/api/persons", (request, response) => {
   app.use(morgan("dev"));
 });
 
+app.put("/api/persons/:id", (request, response) => {
+  const id = request.params.id;
+  const body = request.body;
+  const person = {
+    name: body.name,
+    number: body.number,
+    id: id,
+  };
+
+  persons = persons.map((person) => (person.id !== id ? person : person));
+  response.json(person);
+});
+
 app.get("/info", (request, response) => {
   response.send(
     `<p>Phonebook has info for ${persons.length} people</p><p>${new Date()}</p>`
   );
 });
 
-const PORT = 3001;
+const PORT = process.env.PORT || 3001
 app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
+  console.log(`Server running on port ${PORT}`)
+})
