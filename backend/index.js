@@ -5,7 +5,7 @@ const app = express();
 app.use(express.static('dist'))
 app.use(morgan("dev"));
 
-let persons = [
+let people = [
   {
     id: "1",
     name: "Arto Hellas",
@@ -34,20 +34,20 @@ app.get("/", (request, response) => {
   response.send("<h1>Hello World!</h1>");
 });
 
-app.get("/api/persons", (request, response) => {
-  response.json(persons);
+app.get("/api/people", (request, response) => {
+  response.json(people);
 });
 
-app.get("/api/persons/:id", (request, response) => {
+app.get("/api/people/:id", (request, response) => {
   const id = request.params.id;
-  const note = persons.find((note) => note.id === id);
+  const note = people.find((note) => note.id === id);
 
   note ? response.json(note) : response.status(404).end();
 });
 
-app.delete("/api/persons/:id", (request, response) => {
+app.delete("/api/people/:id", (request, response) => {
   const id = request.params.id;
-  persons = persons.filter((note) => note.id !== id);
+  people = people.filter((note) => note.id !== id);
 
   response.status(204).end();
 });
@@ -57,7 +57,7 @@ const generateId = () => {
   return String(maxId + 1);
 };
 
-app.post("/api/persons", (request, response) => {
+app.post("/api/people", (request, response) => {
   const body = request.body;
   const person = {
     name: body.name,
@@ -67,14 +67,14 @@ app.post("/api/persons", (request, response) => {
 
   !body.name || !body.number
     ? response.status(400).json({ error: "content missing" })
-    : persons.find((person) => person.name === body.name)
+    : people.find((person) => person.name === body.name)
     ? response.status(400).json({ error: "name must be unique" })
-    : (persons = persons.concat(person));
+    : (people = people.concat(person));
   response.json(person);
   app.use(morgan("dev"));
 });
 
-app.put("/api/persons/:id", (request, response) => {
+app.put("/api/people/:id", (request, response) => {
   const id = request.params.id;
   const body = request.body;
   const person = {
@@ -83,13 +83,13 @@ app.put("/api/persons/:id", (request, response) => {
     id: id,
   };
 
-  persons = persons.map((person) => (person.id !== id ? person : person));
+  people = people.map((person) => (person.id !== id ? person : person));
   response.json(person);
 });
 
 app.get("/info", (request, response) => {
   response.send(
-    `<p>Phonebook has info for ${persons.length} people</p><p>${new Date()}</p>`
+    `<p>Phonebook has info for ${people.length} people</p><p>${new Date()}</p>`
   );
 });
 

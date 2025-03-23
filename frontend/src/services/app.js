@@ -1,8 +1,8 @@
 import axios from "axios";
 
-const baseUrl = "/api/persons";
+const baseUrl = "/api/people";
 
-const getPersons = () => {
+const getPeople = () => {
   const request = axios.get(baseUrl);
   return request.then(response => response.data);
 }
@@ -22,4 +22,4 @@ const deletePerson = (id) => {
   return request.then(response => response.data);
 }
 
-export default { getPersons, createPerson, updatePerson, deletePerson };
+export default { getPeople, createPerson, updatePerson, deletePerson };
