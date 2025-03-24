@@ -3,7 +3,7 @@ const mongoose = require('mongoose')
 mongoose.set('strictQuery', false)
 
 
-const url = process.env.MONGODB_URI
+const url = process.env.API_KEY
 
 mongoose.connect(url)
 
