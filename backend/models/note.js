@@ -5,7 +5,6 @@ mongoose.set('strictQuery', false)
 
 const url = process.env.API_KEY
 
-console.log('connecting to', url)
 mongoose.connect(url)
 
   .then(result => {
@@ -15,10 +14,15 @@ mongoose.connect(url)
     console.log('error connecting to MongoDB:', error.message)
   })
 
-const noteSchema = new mongoose.Schema({
-  content: String,
-  important: Boolean,
-})
+  const noteSchema = new mongoose.Schema({
+
+    content: {
+      type: String,
+      minLength: 5,
+      required: true
+    },
+    important: Boolean
+  })
 
 noteSchema.set('toJSON', {
   transform: (document, returnedObject) => {
