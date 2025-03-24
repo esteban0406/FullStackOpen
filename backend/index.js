@@ -1,12 +1,32 @@
 require("dotenv").config();
 const express = require("express");
-const morgan = require("morgan");
 const Person = require("./models/person");
 
 const app = express();
+
+const requestLogger = (request, response, next) => {
+  console.log('Method:', request.method)
+  console.log('Path:  ', request.path)
+  console.log('Body:  ', request.body)
+  console.log('---')
+  next()
+}
+
+const errorHandler = (error, request, response, next) => {
+  console.error(error.message)
+
+  if (error.name === 'CastError') {
+    return response.status(400).send({ error: 'malformatted id' })
+  } else if (error.name === 'ValidationError') {
+    return response.status(400).json({ error: error.message })
+  }
+
+  next(error)
+}
+
 app.use(express.static("dist"));
-app.use(morgan("dev"));
 app.use(express.json());
+app.use(requestLogger)
 
 app.get("/", (request, response) => {
   response.send("<h1>Hello World!</h1>");
@@ -33,7 +53,7 @@ app.delete("/api/people/:id", (request, response) => {
   .catch(error => next(error))
 });
 
-app.post("/api/people", (request, response) => {
+app.post("/api/people", (request, response, next) => {
   const body = request.body;
 
   if (!body.name || !body.number) {
@@ -46,8 +66,9 @@ app.post("/api/people", (request, response) => {
   });
 
   person.save().then((savedPerson) => {
-    response.json(savedPerson);
-  });
+    response.json(savedPerson)
+  })
+  .catch(error => next(error))
 });
 
 app.put("/api/people/:id", (request, response) => {
@@ -72,20 +93,14 @@ app.get("/info", (request, response) => {
   );
 });
 
+const unknownEndpoint = (request, response) => {
+  response.status(404).send({ error: 'unknown endpoint' })
+}
+
+app.use(unknownEndpoint)
+app.use(errorHandler)
+
 const PORT = process.env.PORT;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
-
-const errorHandler = (error, request, response, next) => {
-  console.error(error.message)
-
-  if (error.name === 'CastError') {
-    return response.status(400).send({ error: 'malformatted id' })
-  } 
-
-  next(error)
-}
-
-// this has to be the last loaded middleware, also all the routes should be registered before this!
-app.use(errorHandler)
