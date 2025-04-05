@@ -23,8 +23,9 @@ const mostBlogs = (blogs) => {
   console.log(authorCounts)
 
   const topAuthor = Object.entries(authorCounts).reduce(
-    (max, author) => (author[1] > max.count ? { author: author[0], count: author[1] } : max),
-    { author: '', count: 0 },
+    (max, author) =>
+      author[1] > max.count ? { author: author[0], count: author[1] } : max,
+    { author: '', count: 0 }
   )
 
   return topAuthor
