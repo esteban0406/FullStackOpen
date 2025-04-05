@@ -20,7 +20,6 @@ const mostBlogs = (blogs) => {
     counts[blog.author] = (counts[blog.author] || 0) + 1
     return counts
   }, {})
-  console.log(authorCounts)
 
   const topAuthor = Object.entries(authorCounts).reduce(
     (max, author) =>
