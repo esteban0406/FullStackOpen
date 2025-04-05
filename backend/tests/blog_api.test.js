@@ -73,7 +73,6 @@ describe('Blog API tests', () => {
     const addedBlog = response.body.find(
       (b) => b.title === newBlog.title && b.author === newBlog.author
     )
-    console.log(addedBlog)
 
     assert.ok(addedBlog, 'Blog was not found in the response')
     assert.strictEqual(addedBlog.likes, 0)
@@ -81,5 +80,29 @@ describe('Blog API tests', () => {
 
   after(async () => {
     await mongoose.connection.close()
+  })
+
+  test('cant add blog without url or title', async () => {
+    const newBlogWithoutUrl = {
+      title: 'El juan agogo2',
+      author: 'juan agogo2',
+    }
+
+    const newBlogWithoutTitle = {
+      author: 'juan agogo2',
+      url: 'http://www.juanagogo2.com',
+    }
+
+    await api
+      .post('/api/Blogs')
+      .send(newBlogWithoutUrl)
+      .expect(400)
+      .expect('Content-Type', /application\/json/)
+
+    await api
+      .post('/api/Blogs')
+      .send(newBlogWithoutTitle)
+      .expect(400)
+      .expect('Content-Type', /application\/json/)
   })
 })
