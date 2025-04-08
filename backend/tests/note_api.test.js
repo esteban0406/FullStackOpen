@@ -4,13 +4,14 @@ const mongoose = require('mongoose')
 const supertest = require('supertest')
 const app = require('../app')
 const api = supertest(app)
+const bcrypt = require('bcrypt')
 
 const helper = require('./test_helper')
-const bcrypt = require('bcrypt')
+
 const User = require('../models/user')
 const Note = require('../models/note')
 
-describe('when there are some notes saved initially', () => {
+describe('when there is initially some notes saved', () => {
   beforeEach(async () => {
     await Note.deleteMany({})
     await Note.insertMany(helper.initialNotes)
@@ -32,11 +33,12 @@ describe('when there are some notes saved initially', () => {
   test('a specific note is within the returned notes', async () => {
     const response = await api.get('/api/notes')
 
-    const contents = response.body.map((r) => r.content)
+    const contents = response.body.map(r => r.content)
     assert(contents.includes('Browser can execute only JavaScript'))
   })
 
   describe('viewing a specific note', () => {
+
     test('succeeds with a valid id', async () => {
       const notesAtStart = await helper.notesInDb()
 
@@ -53,13 +55,17 @@ describe('when there are some notes saved initially', () => {
     test('fails with statuscode 404 if note does not exist', async () => {
       const validNonexistingId = await helper.nonExistingId()
 
-      await api.get(`/api/notes/${validNonexistingId}`).expect(404)
+      await api
+        .get(`/api/notes/${validNonexistingId}`)
+        .expect(404)
     })
 
     test('fails with statuscode 400 id is invalid', async () => {
       const invalidId = '5a3d5da59070081a82a3445'
 
-      await api.get(`/api/notes/${invalidId}`).expect(400)
+      await api
+        .get(`/api/notes/${invalidId}`)
+        .expect(400)
     })
   })
 
@@ -79,16 +85,19 @@ describe('when there are some notes saved initially', () => {
       const notesAtEnd = await helper.notesInDb()
       assert.strictEqual(notesAtEnd.length, helper.initialNotes.length + 1)
 
-      const contents = notesAtEnd.map((n) => n.content)
+      const contents = notesAtEnd.map(n => n.content)
       assert(contents.includes('async/await simplifies making async calls'))
     })
 
     test('fails with status code 400 if data invalid', async () => {
       const newNote = {
-        important: true,
+        important: true
       }
 
-      await api.post('/api/notes').send(newNote).expect(400)
+      await api
+        .post('/api/notes')
+        .send(newNote)
+        .expect(400)
 
       const notesAtEnd = await helper.notesInDb()
 
@@ -101,19 +110,21 @@ describe('when there are some notes saved initially', () => {
       const notesAtStart = await helper.notesInDb()
       const noteToDelete = notesAtStart[0]
 
-      await api.delete(`/api/notes/${noteToDelete.id}`).expect(204)
+      await api
+        .delete(`/api/notes/${noteToDelete.id}`)
+        .expect(204)
 
       const notesAtEnd = await helper.notesInDb()
 
       assert.strictEqual(notesAtEnd.length, helper.initialNotes.length - 1)
 
-      const contents = notesAtEnd.map((r) => r.content)
+      const contents = notesAtEnd.map(r => r.content)
       assert(!contents.includes(noteToDelete.content))
     })
   })
 })
 
-describe('when there is initially one user in db', () => {
+describe('when there is initially one user at db', () => {
   beforeEach(async () => {
     await User.deleteMany({})
 
@@ -161,6 +172,7 @@ describe('when there is initially one user in db', () => {
       .expect('Content-Type', /application\/json/)
 
     const usersAtEnd = await helper.usersInDb()
+
     assert(result.body.error.includes('expected `username` to be unique'))
 
     assert.strictEqual(usersAtEnd.length, usersAtStart.length)
@@ -168,5 +180,6 @@ describe('when there is initially one user in db', () => {
 })
 
 after(async () => {
+  await User.deleteMany({})
   await mongoose.connection.close()
 })
