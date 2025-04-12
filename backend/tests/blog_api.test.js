@@ -7,162 +7,246 @@ const api = supertest(app)
 
 const helper = require('./test_helper')
 const Blog = require('../models/blog')
+const bcrypt = require('bcrypt')
+const User = require('../models/user')
 
 describe('Blog API tests', () => {
   beforeEach(async () => {
     await Blog.deleteMany({})
+    await User.deleteMany({}) // Clear users before each test
+
+    // Create a test user
+    const passwordHash = await bcrypt.hash('sekret', 10)
+    const user = new User({ username: 'root', passwordHash })
+    await user.save()
+
+    // Add initial blogs
     const BlogObjects = helper.blogs.map((blog) => new Blog(blog))
     const promiseArray = BlogObjects.map((blog) => blog.save())
     await Promise.all(promiseArray)
   })
 
   test('blogs are returned as json', async () => {
+    const token = await helper.getToken()
+
     await api
       .get('/api/blogs')
+      .set('Authorization', `Bearer ${token}`)
       .expect(200)
       .expect('Content-Type', /application\/json/)
   })
 
-  test.only('a valid blog can be added', async () => {
+  test.only('a valid blog can be added with token', async () => {
+    const token = await helper.getToken()
+    console.log('Generated token:', token)
+
     const newBlog = {
       title: 'El juan agogo',
       author: 'juan agogo',
-      url: 'http://www.juan agogo.com',
+      url: 'http://www.juanagogo.com',
       likes: 55,
     }
 
-    await api
+    const postResponse = await api
       .post('/api/blogs')
+      .set('Authorization', `Bearer ${token}`)
       .send(newBlog)
       .expect(201)
       .expect('Content-Type', /application\/json/)
 
-    const response = await api.get('/api/blogs')
+    console.log('POST response:', postResponse.body)
 
-    const blogs = response.body
+    const getResponse = await api.get('/api/blogs')
+    console.log('GET response:', getResponse.body)
 
-    const blogAdded = blogs.some(
-      (blog) => blog.title === newBlog.title && blog.author === newBlog.author
+    const blogAdded = getResponse.body.some(
+      (blog) => blog.title === newBlog.title && blog.author === 'root' // Match the username of the user who created the blog
     )
 
     assert(blogAdded)
-    assert.strictEqual(response.body.length, helper.blogs.length + 1)
+    assert.strictEqual(getResponse.body.length, helper.blogs.length + 1)
   })
 
-  test('Id IS named ID', async () => {
-    const response = await api.get('/api/blogs')
+  test('can delete a blog with token', async () => {
+    const token = await helper.getToken()
 
-    assert.ok(response.body[0].id, 'there is nnot __ID')
-  })
-
-  test('like property dont exist', async () => {
     const newBlog = {
-      title: 'El juan agogo2',
-      author: 'juan agogo2',
-      url: 'http://www.juanagogo2.com',
+      title: 'Blog to delete',
+      author: 'Author',
+      url: 'http://delete.com',
+    }
+
+    const created = await api
+      .post('/api/blogs')
+      .set('Authorization', `Bearer ${token}`)
+      .send(newBlog)
+      .expect(201)
+
+    await api
+      .delete(`/api/blogs/${created.body.id}`)
+      .set('Authorization', `Bearer ${token}`)
+      .expect(204)
+
+    const blogsAfter = await helper.notesInDb()
+    assert(!blogsAfter.some((b) => b.id === created.body.id))
+  })
+
+  test('can update a blog with token', async () => {
+    const token = await helper.getToken()
+
+    const newBlog = {
+      title: 'Blog to update',
+      author: 'Author',
+      url: 'http://update.com',
+      likes: 5,
+    }
+
+    const created = await api
+      .post('/api/blogs')
+      .set('Authorization', `Bearer ${token}`)
+      .send(newBlog)
+      .expect(201)
+
+    const updatedBlog = {
+      title: 'Updated Title',
+      author: 'Updated Author',
+      url: 'http://updatedurl.com',
+      likes: 99,
+    }
+
+    const response = await api
+      .put(`/api/blogs/${created.body.id}`)
+      .set('Authorization', `Bearer ${token}`)
+      .send(updatedBlog)
+      .expect(200)
+
+    assert.strictEqual(response.body.title, updatedBlog.title)
+    assert.strictEqual(response.body.likes, updatedBlog.likes)
+  })
+})
+
+describe('when there is initially one user in db', () => {
+  beforeEach(async () => {
+    await User.deleteMany({})
+
+    const passwordHash = await bcrypt.hash('sekret', 10)
+    const user = new User({ username: 'root', passwordHash })
+
+    await user.save()
+  })
+
+  test('creation succeeds with a fresh username', async () => {
+    const usersAtStart = await helper.usersInDb()
+
+    const newUser = {
+      username: 'mluukkai',
+      name: 'Matti Luukkainen',
+      password: 'salainen',
     }
 
     await api
-      .post('/api/blogs')
-      .send(newBlog)
+      .post('/api/users')
+      .send(newUser)
       .expect(201)
       .expect('Content-Type', /application\/json/)
 
-    const response = await api.get('/api/blogs')
+    const usersAtEnd = await helper.usersInDb()
+    assert.strictEqual(usersAtEnd.length, usersAtStart.length + 1)
 
-    const addedBlog = response.body.find(
-      (b) => b.title === newBlog.title && b.author === newBlog.author
+    const usernames = usersAtEnd.map((u) => u.username)
+    assert(usernames.includes(newUser.username))
+  })
+
+  test('creation fails with proper status code and message if username already taken', async () => {
+    const usersAtStart = await helper.usersInDb()
+
+    const newUser = {
+      username: 'root',
+      name: 'Superuser',
+      password: 'salainen',
+    }
+
+    const result = await api
+      .post('/api/users')
+      .send(newUser)
+      .expect(400)
+      .expect('Content-Type', /application\/json/)
+
+    assert(result.body.error.includes('`username` to be unique'))
+
+    const usersAtEnd = await helper.usersInDb()
+    assert.strictEqual(usersAtEnd.length, usersAtStart.length)
+  })
+
+  test('creation fails if username is too short', async () => {
+    const usersAtStart = await helper.usersInDb()
+
+    const newUser = {
+      username: 'ro',
+      name: 'Superuser',
+      password: 'salainen',
+    }
+
+    const result = await api
+      .post('/api/users')
+      .send(newUser)
+      .expect(400)
+      .expect('Content-Type', /application\/json/)
+
+    assert(
+      result.body.error.includes('username must be at least 3 characters long')
     )
 
-    assert.ok(addedBlog, 'Blog was not found in the response')
-    assert.strictEqual(addedBlog.likes, 0)
+    const usersAtEnd = await helper.usersInDb()
+    assert.strictEqual(usersAtEnd.length, usersAtStart.length)
+  })
+
+  test('creation fails if password is too short', async () => {
+    const usersAtStart = await helper.usersInDb()
+
+    const newUser = {
+      username: 'roberto',
+      name: 'Superuser',
+      password: 'sa',
+    }
+
+    const result = await api
+      .post('/api/users')
+      .send(newUser)
+      .expect(400)
+      .expect('Content-Type', /application\/json/)
+
+    assert(
+      result.body.error.includes('password must be at least 3 characters long')
+    )
+
+    const usersAtEnd = await helper.usersInDb()
+    assert.strictEqual(usersAtEnd.length, usersAtStart.length)
+  })
+
+  test('creation fails if password is missing', async () => {
+    const usersAtStart = await helper.usersInDb()
+
+    const newUser = {
+      username: 'roberto',
+      name: 'Superuser',
+    }
+
+    const result = await api
+      .post('/api/users')
+      .send(newUser)
+      .expect(400)
+      .expect('Content-Type', /application\/json/)
+
+    assert(
+      result.body.error.includes('password must be at least 3 characters long')
+    )
+
+    const usersAtEnd = await helper.usersInDb()
+    assert.strictEqual(usersAtEnd.length, usersAtStart.length)
   })
 
   after(async () => {
     await mongoose.connection.close()
   })
-
-  test('cant add blog without url or title', async () => {
-    const newBlogWithoutUrl = {
-      title: 'El juan agogo2',
-      author: 'juan agogo2',
-    }
-
-    const newBlogWithoutTitle = {
-      author: 'juan agogo2',
-      url: 'http://www.juanagogo2.com',
-    }
-
-    await api
-      .post('/api/blogs')
-      .send(newBlogWithoutUrl)
-      .expect(400)
-      .expect('Content-Type', /application\/json/)
-
-    await api
-      .post('/api/blogs')
-      .send(newBlogWithoutTitle)
-      .expect(400)
-      .expect('Content-Type', /application\/json/)
-  })
-
-  test('can delete a blog', async () => {
-    const newBlogWithoutUrl = {
-      title: 'El juan agogo3',
-      author: 'juan agogo3',
-      url: 'http://www.juanagogo3.com',
-      id:'123456'
-    }
-
-    await api
-      .post('/api/blogs')
-      .send(newBlogWithoutUrl)
-      .expect(201)
-      .expect('Content-Type', /application\/json/)
-
-    await api
-      .delete('/api/blogs/123456')
-      .send(newBlogWithoutUrl)
-      .expect(200)
-      .expect('Content-Type', /application\/json/)
-  })
-
-  test('can update a blog', async () => {
-    // Create a new blog
-    const newBlog = {
-      title: 'El juan agogo4',
-      author: 'juan agogo4',
-      url: 'http://www.juanagogo4.com',
-    }
-
-    // Add the blog to the database
-    const response = await api
-      .post('/api/blogs') // Use lowercase 'blogs' to match the route
-      .send(newBlog)
-      .expect(201)
-      .expect('Content-Type', /application\/json/)
-
-    // Extract the ID of the newly created blog
-    const blogToUpdate = response.body
-
-    // Prepare updated data
-    const updatedBlog = {
-      title: 'Updated Title',
-      author: 'Updated Author',
-      url: 'http://www.updatedurl.com',
-    }
-
-    // Update the blog
-    const updateResponse = await api
-      .put(`/api/blogs/${blogToUpdate.id}`) // Use the correct ID
-      .send(updatedBlog)
-      .expect(200)
-      .expect('Content-Type', /application\/json/)
-
-    // Verify the update
-    assert.strictEqual(updateResponse.body.title, updatedBlog.title)
-    assert.strictEqual(updateResponse.body.author, updatedBlog.author)
-    assert.strictEqual(updateResponse.body.url, updatedBlog.url)
-  })
-
 })

@@ -1,4 +1,21 @@
 const Blog = require('../models/blog')
+const User = require('../models/user')
+const jwt = require('jsonwebtoken')
+
+const getToken = async () => {
+  const user = await User.findOne({ username: 'root' })
+  if (!user) {
+    throw new Error('Test user not found')
+  }
+
+  const userForToken = {
+    username: user.username,
+    id: user._id,
+  }
+
+  const token = jwt.sign(userForToken, process.env.SECRET)
+  return token
+}
 
 const blogs = [
   {
@@ -64,8 +81,15 @@ const notesInDb = async () => {
   return blog.map((note) => note.toJSON())
 }
 
+const usersInDb = async () => {
+  const users = await User.find({})
+  return users.map((user) => user.toJSON())
+}
+
 module.exports = {
   blogs,
   nonExistingId,
   notesInDb,
+  usersInDb,
+  getToken
 }
