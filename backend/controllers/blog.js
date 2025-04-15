@@ -7,7 +7,7 @@ blogRouter.get('/', async (request, response) => {
   response.json(blogs)
 })
 
-blogRouter.post('/',middleware.userExtractor, async (request, response) => {
+blogRouter.post('/', middleware.userExtractor, async (request, response) => {
   const user = request.user
 
   if (!user) {
@@ -26,22 +26,26 @@ blogRouter.post('/',middleware.userExtractor, async (request, response) => {
   response.status(201).json(savedBlog)
 })
 
-blogRouter.delete('/:id',middleware.userExtractor, async (request, response) => {
-  const user = request.user
-  if (!user) {
-    return response.status(404).json({ error: 'User not found' })
-  }
-  const blog = await Blog.findById(request.params.id)
-  if (!blog) {
-    return response.status(404).json({ error: 'Blog not found' })
-  }
-  if (blog.user.toString() !== user._id.toString()) {
-    return response.status(401).json({ error: 'Unauthorized' })
-  }
+blogRouter.delete(
+  '/:id',
+  middleware.userExtractor,
+  async (request, response) => {
+    const user = request.user
+    if (!user) {
+      return response.status(404).json({ error: 'User not found' })
+    }
+    const blog = await Blog.findById(request.params.id)
+    if (!blog) {
+      return response.status(404).json({ error: 'Blog not found' })
+    }
+    if (blog.user.toString() !== user._id.toString()) {
+      return response.status(401).json({ error: 'Unauthorized' })
+    }
 
-  await blog.deleteOne()
-  response.status(204).end()
-})
+    await blog.deleteOne()
+    response.status(204).end()
+  }
+)
 
 blogRouter.put('/:id', async (request, response) => {
   const { id } = request.params

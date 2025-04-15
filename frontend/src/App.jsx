@@ -1,142 +1,101 @@
-import { useState, useEffect } from "react";
-import Blog from "./components/Blog";
-import blogService from "./services/blogs";
-import loginService from "./services/login";
+import { useState, useEffect } from 'react'
+import Blog from './components/Blog'
+import blogService from './services/blogs'
+import loginService from './services/login'
 import Notification from './components/Notification'
+import LoginForm from './components/LoginForm'
+import BlogForm from './components/BlogForm'
 
 const App = () => {
-  const [blogs, setBlogs] = useState([]);
-  const [newBlog, setNewBlog] = useState({ title: "", author: "", url: "" });
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
-  const [user, setUser] = useState(null);
+  const [blogs, setBlogs] = useState([])
+  const [newBlog, setNewBlog] = useState({ title: '', author: '', url: '' })
+  const [username, setUsername] = useState('')
+  const [password, setPassword] = useState('')
+  const [user, setUser] = useState(null)
   const [errorMessage, setErrorMessage] = useState(null)
+  const [loginVisible, setLoginVisible] = useState(false)
+  const [BlogFormVisible, setBlogFormVisible] = useState(false)
 
   useEffect(() => {
     const fetcgBlogs = async () => {
       try {
-        setBlogs(await blogService.getAll());
+        setBlogs(await blogService.getAll())
       } catch (error) {
         setErrorMessage(error.message)
         setTimeout(() => {
           setErrorMessage(null)
         }, 5000)
       }
-    };
-    fetcgBlogs();
-  }, []);
+    }
+    fetcgBlogs()
+  }, [])
 
   useEffect(() => {
-    const loggedUserJSON = window.localStorage.getItem("loggedBlofappUser");
+    const loggedUserJSON = window.localStorage.getItem('loggedBlofappUser')
     if (loggedUserJSON) {
-      const user = JSON.parse(loggedUserJSON);
-      setUser(user);
-      blogService.setToken(user.token);
+      const user = JSON.parse(loggedUserJSON)
+      setUser(user)
+      blogService.setToken(user.token)
     }
-  }, []);
+  }, [])
 
   const handleLogin = async (event) => {
-    event.preventDefault();
+    event.preventDefault()
 
     try {
       const user = await loginService.login({
         username,
         password,
-      });
-      window.localStorage.setItem("loggedBlofappUser", JSON.stringify(user));
-      blogService.setToken(user.token);
-      setUser(user);
-      setUsername("");
-      setPassword("");
+      })
+      window.localStorage.setItem('loggedBlofappUser', JSON.stringify(user))
+      blogService.setToken(user.token)
+      setUser(user)
+      setUsername('')
+      setPassword('')
     } catch (exception) {
       setErrorMessage('wrong credentials')
       setTimeout(() => {
         setErrorMessage(null)
-      }, 5000);
+      }, 5000)
     }
-  };
+  }
 
-  const handleBlogChange = (event) => {
-    const { name, value } = event.target;
-    setNewBlog((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-  };
-
-  const addBlog = async (event) => {
-    event.preventDefault();
-    const BlogObject = {
-      title: newBlog.title,
-      author: newBlog.author,
-      url: newBlog.url,
-    };
-
+  const addBlog = async (BlogObject) => {
     try {
-      const returnedBlog = await blogService.create(BlogObject);
-      setBlogs(blogs.concat(returnedBlog));
-      setNewBlog({ title: "", author: "", url: "" });
+      const returnedBlog = await blogService.create(BlogObject.content)
+      setBlogs(blogs.concat(returnedBlog))
+      setNewBlog({ title: '', author: '', url: '' })
+      createBlog({})
     } catch (error) {
-      setErrorMessage(error.response?.data?.error || 'Error creating blog');
+      setErrorMessage(error.response?.data?.error)
       setTimeout(() => {
         setErrorMessage(null)
       }, 5000)
     }
-    
-  };
+  }
 
-  const loginForm = () => (
-    <form onSubmit={handleLogin}>
-      <div>
-        username
-        <input
-          type="text"
-          value={username}
-          name="Username"
-          onChange={({ target }) => setUsername(target.value)}
-        />
-      </div>
-      <div>
-        password
-        <input
-          type="password"
-          value={password}
-          name="Password"
-          onChange={({ target }) => setPassword(target.value)}
-        />
-      </div>
-      <button type="submit">login</button>
-    </form>
-  );
+  const loginForm = () => {
+    const hideWhenVisible = { display: loginVisible ? 'none' : '' }
+    const showWhenVisible = { display: loginVisible ? '' : 'none' }
 
-  const BlogForm = () => (
-    <div>
-      <h2>New Blog</h2>
-      <form onSubmit={addBlog}>
-        <div>
-          Title:
-          <input
-            name="title"
-            value={newBlog.title}
-            onChange={handleBlogChange}
+    return (
+      <div>
+        <div style={hideWhenVisible}>
+          <button onClick={() => setLoginVisible(true)}>log in</button>
+        </div>
+        <div style={showWhenVisible}>
+          <LoginForm
+            username={username}
+            password={password}
+            handleUsernameChange={({ target }) => setUsername(target.value)}
+            handlePasswordChange={({ target }) => setPassword(target.value)}
+            handleSubmit={handleLogin}
           />
+          <button onClick={() => setLoginVisible(false)}>cancel</button>
         </div>
-        <div>
-          Author:
-          <input
-            name="author"
-            value={newBlog.author}
-            onChange={handleBlogChange}
-          />
-        </div>
-        <div>
-          URL:
-          <input name="url" value={newBlog.url} onChange={handleBlogChange} />
-        </div>
-        <button type="submit">create</button>
-      </form>
-    </div>
-  );
+      </div>
+    )
+  }
 
   return (
     <div>
@@ -148,13 +107,21 @@ const App = () => {
           <p>{user.username} logged in</p>
           <button
             onClick={() => {
-              window.localStorage.removeItem("loggedBlofappUser");
-              setUser(null);
+              window.localStorage.removeItem('loggedBlofappUser')
+              setUser(null)
             }}
           >
             log out
           </button>
-          {BlogForm()}
+
+          {BlogFormVisible ? (
+            <div>
+              <BlogForm createBlog={addBlog} />
+              <button onClick={() => setBlogFormVisible(false)}>cancel</button>
+            </div>
+          ) : (
+            <button onClick={() => setBlogFormVisible(true)}>New note</button>
+          )}
         </div>
       )}
       <h2>List of Blogs</h2>
@@ -162,7 +129,7 @@ const App = () => {
         <Blog key={blog.id} blog={blog} />
       ))}
     </div>
-  );
-};
+  )
+}
 
-export default App;
+export default App
