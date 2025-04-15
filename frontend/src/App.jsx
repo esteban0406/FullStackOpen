@@ -1,104 +1,166 @@
 import { useState, useEffect } from "react";
-import Note from "./components/Note";
-import Notification from "./components/Notification";
-import noteService from "./services/notes";
-import "./index.css";
+import Blog from "./components/Blog";
+import blogService from "./services/blogs";
+import loginService from "./services/login";
+import Notification from './components/Notification'
 
 const App = () => {
-  const [notes, setNotes] = useState([]);
-  const [newNote, setNewNote] = useState("");
-  const [showAll, setShowAll] = useState(true);
-  const [errorMessage, setErrorMessage] = useState("some error happened...");
+  const [blogs, setBlogs] = useState([]);
+  const [newBlog, setNewBlog] = useState({ title: "", author: "", url: "" });
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [user, setUser] = useState(null);
+  const [errorMessage, setErrorMessage] = useState(null)
 
   useEffect(() => {
-    const fetchNotes = () => {
-      noteService.getAll().then((initialNotes) => {
-        setNotes(Array.isArray(initialNotes) ? initialNotes : []); // Ensure notes is an array
-      });
+    const fetcgBlogs = async () => {
+      try {
+        setBlogs(await blogService.getAll());
+      } catch (error) {
+        setErrorMessage(error.message)
+        setTimeout(() => {
+          setErrorMessage(null)
+        }, 5000)
+      }
     };
-    fetchNotes(); // Fetch notes whenever updateTrigger changes
+    fetcgBlogs();
   }, []);
 
-  const addNote = (event) => {
+  useEffect(() => {
+    const loggedUserJSON = window.localStorage.getItem("loggedBlofappUser");
+    if (loggedUserJSON) {
+      const user = JSON.parse(loggedUserJSON);
+      setUser(user);
+      blogService.setToken(user.token);
+    }
+  }, []);
+
+  const handleLogin = async (event) => {
     event.preventDefault();
-    const noteObject = {
-      content: newNote,
-      important: Math.random() > 0.5,
-    };
 
-    noteService.create(noteObject).then((returnedNote) => {
-      setNotes(notes.concat(returnedNote));
-      setNewNote("");
-    });
-  };
-
-  const toggleImportanceOf = (id) => {
-    const note = notes.find((n) => n.id === id);
-    const changedNote = { ...note, important: !note.important };
-
-    noteService
-      .update(id, changedNote)
-      .then((returnedNote) => {
-        setNotes(notes.map((note) => (note.id === id ? returnedNote : note)));
-      })
-      .catch((error) => {
-        setErrorMessage(
-          `Note '${note.content}' was already removed from server`
-        );
-        setTimeout(() => {
-          setErrorMessage(null);
-        }, 5000);
-        setNotes(notes.filter((n) => n.id !== id));
+    try {
+      const user = await loginService.login({
+        username,
+        password,
       });
+      window.localStorage.setItem("loggedBlofappUser", JSON.stringify(user));
+      blogService.setToken(user.token);
+      setUser(user);
+      setUsername("");
+      setPassword("");
+    } catch (exception) {
+      setErrorMessage('wrong credentials')
+      setTimeout(() => {
+        setErrorMessage(null)
+      }, 5000);
+    }
   };
 
-  const handleNoteChange = (event) => {
-    setNewNote(event.target.value);
+  const handleBlogChange = (event) => {
+    const { name, value } = event.target;
+    setNewBlog((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
   };
 
-  const notesToShow = showAll
-    ? notes // Ensure notes is an array
-    : notes.filter((note) => note.important === true);
-
-  const Footer = () => {
-    const footerStyle = {
-      color: "green",
-      fontStyle: "italic",
-      fontSize: 16,
+  const addBlog = async (event) => {
+    event.preventDefault();
+    const BlogObject = {
+      title: newBlog.title,
+      author: newBlog.author,
+      url: newBlog.url,
     };
-    return (
-      <div style={footerStyle}>
-        <br />
-        <em>
-          Note app, Department of Computer Science, University of Helsinki 2025
-        </em>
-      </div>
-    );
+
+    try {
+      const returnedBlog = await blogService.create(BlogObject);
+      setBlogs(blogs.concat(returnedBlog));
+      setNewBlog({ title: "", author: "", url: "" });
+    } catch (error) {
+      setErrorMessage(error.response?.data?.error || 'Error creating blog');
+      setTimeout(() => {
+        setErrorMessage(null)
+      }, 5000)
+    }
+    
   };
+
+  const loginForm = () => (
+    <form onSubmit={handleLogin}>
+      <div>
+        username
+        <input
+          type="text"
+          value={username}
+          name="Username"
+          onChange={({ target }) => setUsername(target.value)}
+        />
+      </div>
+      <div>
+        password
+        <input
+          type="password"
+          value={password}
+          name="Password"
+          onChange={({ target }) => setPassword(target.value)}
+        />
+      </div>
+      <button type="submit">login</button>
+    </form>
+  );
+
+  const BlogForm = () => (
+    <div>
+      <h2>New Blog</h2>
+      <form onSubmit={addBlog}>
+        <div>
+          Title:
+          <input
+            name="title"
+            value={newBlog.title}
+            onChange={handleBlogChange}
+          />
+        </div>
+        <div>
+          Author:
+          <input
+            name="author"
+            value={newBlog.author}
+            onChange={handleBlogChange}
+          />
+        </div>
+        <div>
+          URL:
+          <input name="url" value={newBlog.url} onChange={handleBlogChange} />
+        </div>
+        <button type="submit">create</button>
+      </form>
+    </div>
+  );
 
   return (
     <div>
-      <h1>Notes</h1>
+      <h2>blogs</h2>
       <Notification message={errorMessage} />
-      <div>
-        <button onClick={() => setShowAll(!showAll)}>
-          show {showAll ? "important" : "all"}
-        </button>
-      </div>
-      <ul>
-        {notesToShow.map((note) => (
-          <Note
-            key={note.id}
-            note={note}
-            toggleImportance={() => toggleImportanceOf(note.id)}
-          />
-        ))}
-      </ul>
-      <form onSubmit={addNote}>
-        <input value={newNote} onChange={handleNoteChange} />
-        <button type="submit">save</button>
-      </form>
-      <Footer />
+      {!user && loginForm()}
+      {user && (
+        <div>
+          <p>{user.username} logged in</p>
+          <button
+            onClick={() => {
+              window.localStorage.removeItem("loggedBlofappUser");
+              setUser(null);
+            }}
+          >
+            log out
+          </button>
+          {BlogForm()}
+        </div>
+      )}
+      <h2>List of Blogs</h2>
+      {blogs.map((blog) => (
+        <Blog key={blog.id} blog={blog} />
+      ))}
     </div>
   );
 };
