@@ -10,13 +10,11 @@ export default defineConfig({
         target: 'http://localhost:3001',
         changeOrigin: true,
       },
-    }    
+    }
   },
-
-  configureServer(server) {
-    server.middlewares.use((req, res, next) => {
-      console.log(`[Proxy Request] ${req.method} ${req.url}`)
-      next()
-    })
+  test: {
+    environment: 'jsdom',
+    globals: true,
+    setupFiles: './testSetup.js', 
   }
 })
