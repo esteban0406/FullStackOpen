@@ -1,59 +1,59 @@
-import { useState } from 'react'
-import blogService from '../services/blogs'
+import { useState } from "react";
+import blogService from "../services/blogs";
 
-const Blog = ({ blog }) => {
-  const [visible, setVisible] = useState(false)
-  const blogStyle = {
-    paddingTop: 10,
-    paddingLeft: 2,
-    border: 'solid',
-    borderWidth: 1,
-    marginBottom: 5
-  }
+const Blog = ({ blog, updateBlog, deleteBlog }) => {
+  const [visible, setVisible] = useState(false);
 
-  const handleLike = async (blog) => {
-    {console.log(blog)}
-    console.log('Blog ID:', blog.id)
+  const handleLike = async () => {
     const updatedBlog = {
       ...blog,
       likes: blog.likes + 1,
-    }
-  
+    };
+
+    await updateBlog(updatedBlog);
+  };
+
+const handleDelete = async () => {
+  const confirmDelete = window.confirm(`Remove blog ${blog.title} by ${blog.author}?`);
+  if (confirmDelete) {
     try {
-      const response = await blogService.update(blog.id, updatedBlog)
+      await deleteBlog(blog.id); // Call the deleteBlog function only after confirmation
     } catch (error) {
-      console.error('Error updating likes:', error)
+      console.error("Error deleting blog:", error);
     }
   }
-  
+};
+
   return (
-    <div style={blogStyle}> 
-      {blog.title} <br></br>
-      {blog.author}<br></br>
+    <div
+      style={{
+        paddingTop: 10,
+        paddingLeft: 2,
+        border: "solid",
+        borderWidth: 1,
+        marginBottom: 5,
+      }}
+    >
       {visible ? (
         <>
-          {blog.user.username}<br></br>
-          Likes {blog.likes} 
-          <button onClick={()=>{handleLike(blog)}}>Like</button><br></br>
-          <button
-            onClick={() => {
-              setVisible(false)
-            }}
-          >
-            Hide
-          </button>
+          {blog.title} <button onClick={() => setVisible(false)}>Hide</button><br></br>
+          {blog.author} <br />
+          {blog.user.username}
+          <br />
+          Likes {blog.likes}
+          <button onClick={handleLike}>Like</button>
+          <br />
+          <button onClick={handleDelete}>remove</button>
         </>
       ) : (
-        <button
-          onClick={() => {
-            setVisible(true)
-          }}
-        >
-          View
-        </button>
+        <>
+          {blog.title} <br />
+          {blog.author} <br />
+          <button onClick={() => setVisible(true)}>View</button>
+        </>
       )}
     </div>
-  )
-}
+  );
+};
 
-export default Blog
+export default Blog;

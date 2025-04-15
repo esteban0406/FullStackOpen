@@ -51,10 +51,15 @@ blogRouter.put('/:id', async (request, response) => {
   const { id } = request.params
   const updatedData = request.body
 
+  if (updatedData.user && typeof updatedData.user === 'object') {
+    updatedData.user = updatedData.user.id // Use only the user ID
+  }
+
   const updatedBlog = await Blog.findByIdAndUpdate(id, updatedData, {
     new: true,
     runValidators: true,
-  })
+  }).populate('user', { username: 1, name: 1 })
+
   updatedBlog
     ? response.json(updatedBlog)
     : response.status(404).json({ error: 'Blog not found' })
