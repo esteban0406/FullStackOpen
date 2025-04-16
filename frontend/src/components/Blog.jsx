@@ -13,16 +13,18 @@ const Blog = ({ blog, updateBlog, deleteBlog }) => {
     await updateBlog(updatedBlog);
   };
 
-const handleDelete = async () => {
-  const confirmDelete = window.confirm(`Remove blog ${blog.title} by ${blog.author}?`);
-  if (confirmDelete) {
-    try {
-      await deleteBlog(blog.id); // Call the deleteBlog function only after confirmation
-    } catch (error) {
-      console.error("Error deleting blog:", error);
+  const handleDelete = async () => {
+    const confirmDelete = window.confirm(
+      `Remove blog ${blog.title} by ${blog.author}?`
+    );
+    if (confirmDelete) {
+      try {
+        await deleteBlog(blog.id); // Call the deleteBlog function only after confirmation
+      } catch (error) {
+        console.error("Error deleting blog:", error);
+      }
     }
-  }
-};
+  };
 
   return (
     <div
@@ -34,24 +36,29 @@ const handleDelete = async () => {
         marginBottom: 5,
       }}
     >
-      {visible ? (
-        <>
-          {blog.title} <button onClick={() => setVisible(false)}>Hide</button><br></br>
-          {blog.author} <br />
-          {blog.user.username}
-          <br />
-          Likes {blog.likes}
-          <button onClick={handleLike}>Like</button>
-          <br />
-          <button onClick={handleDelete}>remove</button>
-        </>
-      ) : (
-        <>
-          {blog.title} <br />
-          {blog.author} <br />
-          <button onClick={() => setVisible(true)}>View</button>
-        </>
-      )}
+      <div className="blog">
+        {visible ? (
+          <div className="blog-expanded">
+            {blog.title} <button onClick={() => setVisible(false)}>Hide</button>
+            <br />
+            {blog.author} <br />
+            {blog.user.username}
+            <br />
+            Likes {blog.likes}
+            <button onClick={handleLike}>Like</button>
+            <br />
+            <button onClick={handleDelete}>remove</button>
+          </div>
+        ) : (
+          <div className="blog-default">
+            <span>{blog.title}</span>
+            <br />
+            <span>{blog.author}</span>
+            <br />
+            <button onClick={() => setVisible(true)}>View</button>
+          </div>
+        )}
+      </div>
     </div>
   );
 };
