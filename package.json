@@ -1,0 +1,14 @@
+{
+  "name": "fullstackopen",
+  "version": "1.0.0",
+  "description": "Course",
+  "main": "index.js",
+  "scripts": {
+    "cypress:open": "cypress open"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "cypress": "^14.3.0"
+  }
+}
