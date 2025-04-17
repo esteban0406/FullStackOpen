@@ -18,7 +18,7 @@ export default defineConfig({
     setupFiles: "./testSetup.js",
     coverage: {
       enabled: true,
-      reporter: ["text"],// optional: adds terminal + HTML output
+      reporter: ["text"], // optional: adds terminal + HTML output
     },
   },
 });
