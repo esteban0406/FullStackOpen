@@ -12,6 +12,10 @@ export default defineConfig({
       },
     },
   },
+  host: '0.0.0.0', // ¡Clave! Escucha en todas las interfaces
+  port: 5173,
+  strictPort: true, // Evita cambio automático de puerto
+  cors: true,
   test: {
     environment: "jsdom",
     globals: true,
