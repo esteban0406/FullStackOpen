@@ -92,14 +92,14 @@ const App = () => {
 
   const deleteBlog = async (id) => {
     try {
-      await blogService.remove(id)
-      setBlogs(blogs.filter((blog) => blog.id !== id)) // Remove the blog from state
+      await blogService.remove(id);
+      setBlogs(blogs.filter((blog) => blog.id !== id)); // Remove the blog from state
     } catch (error) {
-      console.error('Error deleting blog:', error)
-      setErrorMessage('Error deleting blog')
-      setTimeout(() => setErrorMessage(null), 5000)
+      console.error("Error deleting blog:", error);
+      setErrorMessage("Error deleting blog");
+      setTimeout(() => setErrorMessage(null), 5000);
     }
-  }
+  };
 
   const loginForm = () => {
     const hideWhenVisible = { display: loginVisible ? "none" : "" };
@@ -153,10 +153,16 @@ const App = () => {
       )}
       <h2>List of Blogs</h2>
       {blogs
-        .slice() // avoid mutating the original state
-        .sort((a, b) => b.likes - a.likes) // sort descending by likes
+        .slice()
+        .sort((a, b) => b.likes - a.likes)
         .map((blog) => (
-          <Blog key={blog.id} blog={blog} updateBlog={updateBlog} deleteBlog={deleteBlog}/>
+          <Blog
+            key={blog.id}
+            blog={blog}
+            updateBlog={updateBlog}
+            deleteBlog={deleteBlog}
+            loggedInUser={user} // Pass the 'user' state here
+          />
         ))}
     </div>
   );
