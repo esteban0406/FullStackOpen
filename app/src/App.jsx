@@ -1,53 +1,60 @@
 import React, { useState, useEffect } from 'react';
 import ReactDOM from 'react-dom/client';
 import { createStore } from 'redux';
+import counterReducer from './reducers/noteReducer'; // Importa el reducer desde el archivo correcto
+
+const store = createStore(counterReducer);
 
 function App() {
-  const counterReducer = (state = 0, action) => {
-    switch (action.type) {
-      case 'INCREMENT':
-        return state + 1;
-      case 'DECREMENT':
-        return state - 1;
-      case 'ZERO':
-        return 0;
-      default:
-        return state;
-    }
+  const good = () => {
+    store.dispatch({
+      type: 'GOOD',
+    });
   };
 
-  const store = createStore(counterReducer);
-  const [count, setCount] = useState(store.getState()); // Estado local para el contador
+  const ok = () => {
+    store.dispatch({
+      type: 'OK',
+    });
+  };
+
+  const bad = () => {
+    store.dispatch({
+      type: 'BAD',
+    });
+  };
+
+  const resetstats = () => {
+    store.dispatch({
+      type: 'ZERO',
+    });
+  };
+
+  const [state, setState] = useState(store.getState()); // Almacena el objeto de estado completo
 
   useEffect(() => {
-    // Función listener que se ejecuta cuando el estado de Redux cambia
     const handleChange = () => {
-      setCount(store.getState()); // Actualiza el estado local con el nuevo valor del store
+      setState(store.getState()); // Actualiza el estado local con el nuevo estado del store
     };
 
-    // Suscribe el listener al store
     const unsubscribe = store.subscribe(handleChange);
 
-    // Función de limpieza que se ejecuta cuando el componente se desmonta
     return () => {
-      unsubscribe(); // Desuscribe el listener para evitar fugas de memoria
+      unsubscribe();
     };
-  }, [store]); // Dependencia en el store (aunque generalmente no cambia)
+  }, [store]);
 
   return (
     <>
       <div>
-        {count} {/* Muestra el valor del estado local */}
+        <button onClick={good}>good</button>
+        <button onClick={ok}>ok</button>
+        <button onClick={bad}>bad</button>
+        <button onClick={resetstats}>reset stats</button> {/* Corregí el nombre de la función */}
+        <div>good {state.good}</div> {/* Accede a la propiedad 'good' del estado */}
+        <div>ok {state.ok}</div> {/* Accede a la propiedad 'ok' del estado */}
+        <div>bad {state.bad}</div> {/* Accede a la propiedad 'bad' del estado */}
       </div>
-      <button onClick={() => store.dispatch({ type: 'INCREMENT' })}>
-        plus
-      </button>
-      <button onClick={() => store.dispatch({ type: 'DECREMENT' })}>
-        minus
-      </button>
-      <button onClick={() => store.dispatch({ type: 'ZERO' })}>
-        zero
-      </button>
     </>
   );
 }
