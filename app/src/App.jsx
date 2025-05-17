@@ -3,11 +3,10 @@ import NewNote from './components/NewNote'
 import VisibilityFilter from './components/VisibilityFilter'
 
 const App = () => {
-  
   return (
     <div>
       <NewNote />
-       <VisibilityFilter />
+      <VisibilityFilter />
       <Notes />
     </div>
   )
