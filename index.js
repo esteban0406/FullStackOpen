@@ -1,121 +1,184 @@
 const { ApolloServer } = require('@apollo/server')
 const { startStandaloneServer } = require('@apollo/server/standalone')
 
-let persons = [
+let authors = [
   {
-    name: 'Arto Hellas',
-    phone: '040-123543',
-    street: 'Tapiolankatu 5 A',
-    city: 'Espoo',
-    id: '3d594650-3436-11e9-bc57-8b80ba54c431',
+    name: 'Robert Martin',
+    id: 'afa51ab0-344d-11e9-a414-719c6709cf3e',
+    born: 1952,
   },
   {
-    name: 'Matti Luukkainen',
-    phone: '040-432342',
-    street: 'Malminkaari 10 A',
-    city: 'Helsinki',
-    id: '3d599470-3436-11e9-bc57-8b80ba54c431',
+    name: 'Martin Fowler',
+    id: 'afa5b6f0-344d-11e9-a414-719c6709cf3e',
+    born: 1963,
   },
   {
-    name: 'Venla Ruuska',
-    street: 'Nallemäentie 22 C',
-    city: 'Helsinki',
-    id: '3d599471-3436-11e9-bc57-8b80ba54c431',
+    name: 'Fyodor Dostoevsky',
+    id: 'afa5b6f1-344d-11e9-a414-719c6709cf3e',
+    born: 1821,
+  },
+  {
+    name: 'Joshua Kerievsky', // birthyear not known
+    id: 'afa5b6f2-344d-11e9-a414-719c6709cf3e',
+  },
+  {
+    name: 'Sandi Metz', // birthyear not known
+    id: 'afa5b6f3-344d-11e9-a414-719c6709cf3e',
   },
 ]
 
+/*
+ * Suomi:
+ * Saattaisi olla järkevämpää assosioida kirja ja sen tekijä tallettamalla kirjan yhteyteen tekijän nimen sijaan tekijän id
+ * Yksinkertaisuuden vuoksi tallennamme kuitenkin kirjan yhteyteen tekijän nimen
+ *
+ * English:
+ * It might make more sense to associate a book with its author by storing the author's id in the context of the book instead of the author's name
+ * However, for simplicity, we will store the author's name in connection with the book
+ *
+ * Spanish:
+ * Podría tener más sentido asociar un libro con su autor almacenando la id del autor en el contexto del libro en lugar del nombre del autor
+ * Sin embargo, por simplicidad, almacenaremos el nombre del autor en conexión con el libro
+ */
+
+let books = [
+  {
+    title: 'Clean Code',
+    published: 2008,
+    author: 'Robert Martin',
+    id: 'afa5b6f4-344d-11e9-a414-719c6709cf3e',
+    genres: ['refactoring'],
+  },
+  {
+    title: 'Agile software development',
+    published: 2002,
+    author: 'Robert Martin',
+    id: 'afa5b6f5-344d-11e9-a414-719c6709cf3e',
+    genres: ['agile', 'patterns', 'design'],
+  },
+  {
+    title: 'Refactoring, edition 2',
+    published: 2018,
+    author: 'Martin Fowler',
+    id: 'afa5de00-344d-11e9-a414-719c6709cf3e',
+    genres: ['refactoring'],
+  },
+  {
+    title: 'Refactoring to patterns',
+    published: 2008,
+    author: 'Joshua Kerievsky',
+    id: 'afa5de01-344d-11e9-a414-719c6709cf3e',
+    genres: ['refactoring', 'patterns'],
+  },
+  {
+    title: 'Practical Object-Oriented Design, An Agile Primer Using Ruby',
+    published: 2012,
+    author: 'Sandi Metz',
+    id: 'afa5de02-344d-11e9-a414-719c6709cf3e',
+    genres: ['refactoring', 'design'],
+  },
+  {
+    title: 'Crime and punishment',
+    published: 1866,
+    author: 'Fyodor Dostoevsky',
+    id: 'afa5de03-344d-11e9-a414-719c6709cf3e',
+    genres: ['classic', 'crime'],
+  },
+  {
+    title: 'Demons',
+    published: 1872,
+    author: 'Fyodor Dostoevsky',
+    id: 'afa5de04-344d-11e9-a414-719c6709cf3e',
+    genres: ['classic', 'revolution'],
+  },
+]
+
+/*
+  you can remove the placeholder query once your first one has been implemented 
+*/
+
 const typeDefs = `
-  type Address {
-  street: String!
-  city: String! 
-}
 
-type Person {
-  name: String!
-  phone: String
-
-  address: Address!
-  id: ID!
-}
-
-enum YesNo {
-  YES
-  NO
-}
-
-type Query {
-  personCount: Int!
-
-  allPersons(phone: YesNo): [Person!]!
-  findPerson(name: String!): Person
-}
-
-type Mutation {
-  addPerson(
+  type Book {
+     title: String!
+     published: Int!
+     author: String!
+     id: String!
+     genres: [String!]!
+  }
+  
+  type Author {
     name: String!
-    phone: String
-    street: String!
-    city: String!
-  ): Person
+    id: String!
+    born: Int
+    bookCount: Int!
+  }
 
-  editNumber(
+  type Query {
+    bookCount:Int!
+    authorCount:Int!
+    allBooks(author:String,genre:String):[Book!]!
+    allAuthors:[Author!]!
+  }
+
+  type Mutation {
+  addBook(
+    title: String!
+     published: Int!
+     author: String!
+     genres: [String!]!
+  ): Book
+
+  editAuthor(
     name: String!
-    phone: String!
-  ): Person
-}
+    setBornTo: Int!
+  ): Author
 
+  }
 `
-const { GraphQLError } = require('graphql')
-const { v1: uuid } = require('uuid')
 
 const resolvers = {
   Query: {
-    personCount: () => persons.length,
-
-    allPersons: (root, args) => {
-      if (!args.phone) {
-        return persons
-      }
-      const byPhone = (person) =>
-        args.phone === 'YES' ? person.phone : !person.phone
-      return persons.filter(byPhone)
-    },
-    findPerson: (root, args) => persons.find((p) => p.name === args.name),
-  },
-
-  Person: {
-    address: (root) => {
-      return {
-        street: root.street,
-        city: root.city,
+    bookCount: () => books.length,
+    authorCount: () => authors.length,
+    allBooks: (root, args) => {
+      if (args.author && args.genre) {
+        return books.filter(
+          (book) =>
+            book.author === args.author && book.genres.includes(args.genre)
+        )
+      } else if (args.author) {
+        return books.filter((book) => book.author === args.author)
+      } else if (args.genre) {
+        return books.filter((book) => book.genres.includes(args.genre))
       }
     },
+    allAuthors: () => {
+      return authors
+    },
   },
-
+  Author: {
+    bookCount: (root) => {
+      return books.filter((book) => book.author === root.name).length
+    },
+  },
   Mutation: {
-    addPerson: (root, args) => {
-      if (persons.find((p) => p.name === args.name)) {
-        throw new GraphQLError('Name must be unique', {
-          extensions: {
-            code: 'BAD_USER_INPUT',
-            invalidArgs: args.name,
-          },
-        })
+    addBook: (root, args) => {
+      const book = { ...args, id: `${Date.now()}`, author: args.author }
+      books = books.concat(book)
+      if (!authors.find((a) => a.name === args.author)) {
+        authors = authors.concat({ name: args.author, id: `${Date.now()}` })
       }
-
-      const person = { ...args, id: uuid() }
-      persons = persons.concat(person)
-      return person
+      return book
     },
-    editNumber: (root, args) => {
-      const person = persons.find((p) => p.name === args.name)
-      if (!person) {
-        return null
+    editAuthor: (root, args) => {
+      const author = authors.find((a) => a.name === args.name)
+      if (!author) {
+        throw new Error('Author not found')
       }
-
-      const updatedPerson = { ...person, phone: args.phone }
-      persons = persons.map((p) => (p.name === args.name ? updatedPerson : p))
-      return updatedPerson
+      const updatedAuthor = { ...author, born: args.setBornTo }
+      authors = authors.map((a) => (a.id === author.id ? updatedAuthor : a))
+      return updatedAuthor
     },
   },
 }
