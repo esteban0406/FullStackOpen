@@ -152,6 +152,7 @@ const resolvers = {
       } else if (args.genre) {
         return books.filter((book) => book.genres.includes(args.genre))
       }
+      return books
     },
     allAuthors: () => {
       return authors
