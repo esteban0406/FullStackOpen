@@ -40,13 +40,6 @@ const typeDefs = `
     bookCount: Int!
   }
 
-  type Query {
-    bookCount:Int!
-    authorCount:Int!
-    allBooks(author:String,genre:String):[Book!]!
-    allAuthors:[Author!]!
-  }
-
   type User {
   username: String!
   favoriteGenre: String!
@@ -58,11 +51,14 @@ type Token {
 }
 
 type Query {
-  // ..
-  me: User
-}
+    bookCount:Int!
+    authorCount:Int!
+    allBooks(author:String,genre:String):[Book!]!
+    allAuthors:[Author!]!
+    me: User
+  }
 
-  type Mutation {
+type Mutation {
   addBook(
     title: String!
      published: Int!
@@ -75,8 +71,6 @@ type Query {
     setBornTo: Int!
   ): Author
 
-  }
-
   createUser(
     username: String!
     favoriteGenre: String!
@@ -86,6 +80,7 @@ type Query {
     password: String!
   ): Token
 
+} 
 `
 
 const resolvers = {
@@ -184,7 +179,7 @@ const resolvers = {
           },
         })
       }
-      
+
       return author
     },
     createUser: async (root, args) => {
