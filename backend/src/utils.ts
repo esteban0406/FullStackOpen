@@ -1,15 +1,22 @@
-import { Gender, Patient } from "./types";
-import { v1 as uuid } from 'uuid';
+import { Gender, NewPatientEntry } from "./types";
 
 const isString = (text: unknown): text is string => {
   return typeof text === 'string' || text instanceof String;
 }
 
+const isDate = (date: string): boolean => {
+  return Boolean(Date.parse(date));
+};
+
+const isGender = (param:string): param is Gender => {
+  return Object.values(Gender).map(g => g.toString()).includes(param);
+}
+
 const parseGender = (gender: unknown): Gender => {
-  if (!isString(gender) || !Object.values(Gender).includes(gender as Gender)) {
+  if (!isString(gender) || !isGender(gender)) {
     throw new Error('Incorrect gender: ' + gender);
   }
-  return gender as Gender;
+  return gender;
 };
 
 const parseName = (name: unknown): string => {
@@ -20,8 +27,8 @@ const parseName = (name: unknown): string => {
 };
 
 const parseDate = (date: unknown): string => {
-  if (!isString(date) || !Boolean(Date.parse(date))) {
-    throw new Error('Incorrect or missing date: ' + date);
+  if (!isString(date) || !isDate(date)) {
+      throw new Error('Incorrect date: ' + date);
   }
   return date;
 };
@@ -40,19 +47,18 @@ const parseSsn = (ssn: unknown): string => {
   return ssn;
 };
 
-export const parsePatient = (object: unknown): Patient => {
+export const parsePatient = (object: unknown): NewPatientEntry => {
   if (!object || typeof object !== 'object') {
     throw new Error('Incorrect or missing data');
   }
 
   if ('name' in object && 'dateOfBirth' in object && 'gender' in object && 'occupation' in object && 'ssn' in object) {
-    const newPatient: Patient = {
-      id: uuid(),
-      name: parseName(object.name),
-      dateOfBirth: parseDate(object.dateOfBirth),
-      gender: parseGender(object.gender),
-      occupation: parseOccupation(object.occupation),
-      ssn: parseSsn(object.ssn)
+    const newPatient: NewPatientEntry = {
+        name: parseName(object.name),
+        dateOfBirth: parseDate(object.dateOfBirth),
+        gender: parseGender(object.gender),
+        occupation: parseOccupation(object.occupation),
+        ssn: parseSsn(object.ssn)
     };
 
     return newPatient;

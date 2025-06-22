@@ -1,7 +1,7 @@
-import { Patient, Gender } from '../src/types'
+import { Patient } from '../src/types'
 import { parsePatient } from '../src/utils'
 
-const patient: Patient[] = [
+const patientData = [
   {
     id: 'd2773336-f723-11e9-8f0b-362b9e155667',
     name: 'John McClane',
@@ -44,9 +44,9 @@ const patient: Patient[] = [
   },
 ]
 
-const patientsEntries: Patient[] = patient.map((p) => {
+const patientsEntries: Patient[] = patientData.map((p) => {
   const object = parsePatient(p) as Patient
-  object.id = p.id // Preserve the original ID
+  object.id = p.id
   return object
 })
 
