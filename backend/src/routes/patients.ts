@@ -9,4 +9,9 @@ router.get('/', async (req, res: Response<Patient[]>) => {
   res.send(PatientsService.getEntries())
 })
 
+router.post('/', async (req, res: Response<Patient>) => {
+  const newPatient = PatientsService.addEntry(req.body)
+  res.status(201).send(newPatient)
+})
+
 export default router
