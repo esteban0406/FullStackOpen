@@ -13,7 +13,8 @@
     "cors": "^2.8.5",
     "express": "^5.1.0",
     "jsonserver": "^0.1.6",
-    "uuid": "^11.1.0"
+    "uuid": "^11.1.0",
+    "zod": "^3.25.67"
   },
   "scripts": {
     "tsc": "tsc",
