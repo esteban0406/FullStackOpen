@@ -2,10 +2,18 @@ import { View, TextInput, Button, StyleSheet, Text } from 'react-native'
 import { Formik } from 'formik'
 import * as Yup from 'yup'
 import useSignIn from '../hooks/useSignIn'
-import AuthStorage from '../utils/authStorage'
+import { useNavigate } from 'react-router-native'
+import useAuthStorage from '../hooks/useAuthStorage'
+import { useApolloClient } from '@apollo/client'
+import { useContext } from 'react'
+import AuthContext from '../contexts/AuthContext'
 
 const SignInForm = () => {
-  const [signIn, { loading, error }] = useSignIn();
+  const [signIn] = useSignIn()
+  const navigate = useNavigate()
+  const authStorage = useAuthStorage()
+  const apolloClient = useApolloClient()
+  const { login } = useContext(AuthContext)
 
   const styles = StyleSheet.create({
     container: {
@@ -33,14 +41,15 @@ const SignInForm = () => {
 
   const handleLogin = async (values) => {
     try {
-      const response = await signIn(values);
+      const response = await signIn(values)
       if (response.data.authenticate.accessToken) {
-        const authStorage = new AuthStorage();
-        await authStorage.setAccessToken(response.data.authenticate.accessToken);
-        console.log('Login successful');
-      } 
+        await authStorage.setAccessToken(response.data.authenticate.accessToken)
+        await login(response.data.authenticate.accessToken)
+        apolloClient.resetStore();
+        navigate('/')
+      }
     } catch (error) {
-      console.error('Login failed:', error);
+      console.error('Login failed:', error)
     }
   }
 

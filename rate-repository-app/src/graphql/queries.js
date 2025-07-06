@@ -1,21 +1,30 @@
-import { gql } from '@apollo/client';
+import { gql } from '@apollo/client'
 
 export const GET_REPOSITORIES = gql`
   query {
     repositories {
-        edges {
-            node {
-            id
-            fullName
-            description
-            language
-            forksCount
-            stargazersCount
-            ratingAverage
-            reviewCount
-            ownerAvatarUrl
-            }
+      edges {
+        node {
+          id
+          fullName
+          description
+          language
+          forksCount
+          stargazersCount
+          ratingAverage
+          reviewCount
+          ownerAvatarUrl
         }
+      }
     }
   }
-`;
+`
+
+export const singOutQuery = gql`
+  query {
+    me {
+      id
+      username
+    }
+  }
+`

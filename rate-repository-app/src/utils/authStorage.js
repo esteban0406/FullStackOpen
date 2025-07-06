@@ -23,12 +23,7 @@ class AuthStorage {
   }
 
   async removeAccessToken() {
-    const removeToken = await this.getAccessToken()
-    if (removeToken) {
-      await AsyncStorage.removeItem(`${this.namespace}:accessToken`)
-    } else {
-      console.warn('No access token found to remove')
-    }
+    await AsyncStorage.removeItem(`${this.namespace}:accessToken`)
 
     return AsyncStorage.removeItem(`${this.namespace}:accessToken`).catch(
       (error) => {
